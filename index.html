@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Customer Escalation Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-header: #1a1a2e;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-on-dark: #ffffff;
+            --color-1: #4C72B0;
+            --color-2: #DD8452;
+            --color-3: #55A868;
+            --color-4: #C44E52;
+            --color-5: #8172B3;
+            --color-6: #937860;
+            --positive: #28a745;
+            --negative: #dc3545;
+            --gap: 16px;
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--gap);
+        }
+
+        .dashboard-header {
+            background: var(--bg-header);
+            color: var(--text-on-dark);
+            padding: 24px;
+            border-radius: var(--radius);
+            margin-bottom: var(--gap);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .dashboard-header p {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .filter-group select {
+            padding: 6px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-on-dark);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .filter-group select:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-group select option {
+            background: var(--bg-header);
+            color: var(--text-on-dark);
+        }
+
+        .submit-btn {
+            padding: 6px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            padding: 32px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 16px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        .form-info {
+            background: #e8f5e9;
+            border-left: 4px solid #28a745;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #1b5e20;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 24px;
+        }
+
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: var(--text-primary);
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-submit {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background: #218838;
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--gap);
+            margin-bottom: var(--gap);
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid;
+        }
+
+        .kpi-card.complaints {
+            border-left-color: var(--color-4);
+        }
+
+        .kpi-card.orders {
+            border-left-color: var(--color-1);
+        }
+
+        .kpi-card.information {
+            border-left-color: var(--color-3);
+        }
+
+        .kpi-card.total {
+            border-left-color: var(--color-2);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .kpi-change {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .kpi-change.positive { color: var(--positive); }
+        .kpi-change.negative { color: var(--negative); }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: var(--gap);
+            margin-bottom: var(--gap);
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-container h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .chart-container canvas {
+            max-height: 320px;
+        }
+
+        .table-section {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            overflow-x: auto;
+        }
+
+        .table-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table thead th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #dee2e6;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .data-table thead th:hover {
+            color: var(--text-primary);
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .data-table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .highlights {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: var(--gap);
+        }
+
+        .highlights h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .highlight-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .highlight-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid var(--color-1);
+        }
+
+        .highlight-item.warning {
+            border-left-color: var(--color-4);
+        }
+
+        .highlight-item.positive {
+            border-left-color: var(--color-3);
+        }
+
+        .highlight-icon {
+            font-size: 20px;
+            line-height: 1;
+            min-width: 24px;
+        }
+
+        .highlight-text {
+            flex: 1;
+        }
+
+        .highlight-text strong {
+            display: block;
+            font-size: 12px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .highlight-text span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .action-plan-section {
+            margin-top: 32px;
+        }
+
+        .action-plan-section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .action-plan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .action-header {
+            padding: 16px;
+            color: white;
+        }
+
+        .action-header h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .action-body {
+            padding: 16px;
+        }
+
+        .action-item {
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .action-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .action-item strong {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .action-item p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .action-item ul {
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .action-item ul li {
+            margin-bottom: 4px;
+        }
+
+        .dashboard-footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media print {
+            body { background: white; }
+            .dashboard-container { max-width: none; }
+            .filters { display: none; }
+            .chart-container { break-inside: avoid; }
+            .kpi-card { border: 1px solid #dee2e6; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div>
+                <h1>📊 Mobile Customer Escalation Management</h1>
+                <p>Interactive Dashboard | January - March 2026</p>
+            </div>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="filter-month">Month:</label>
+                    <select id="filter-month" onchange="dashboard.applyFilters()">
+                        <option value="all">All Months</option>
+                        <option value="2026-01">January 2026</option>
+                        <option value="2026-02">February 2026</option>
+                        <option value="2026-03">March 2026</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-type">Type:</label>
+                    <select id="filter-type" onchange="dashboard.applyFilters()">
+                        <option value="all">All Types</option>
+                        <option value="K">Complaints Only</option>
+                        <option value="P">Orders Only</option>
+                        <option value="I">Information Only</option>
+                    </select>
+                </div>
+                <button id="submit-btn" class="submit-btn" onclick="dashboard.openSubmitModal()">📤 Submit</button>
+            </div>
+        </header>
+
+        <section class="highlights">
+            <h3>📋 Executive Summary</h3>
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 6px; border-left: 4px solid #4C72B0; margin-bottom: 16px;">
+                <p style="margin: 0; line-height: 1.6; color: #212529;">
+                    <strong>Period:</strong> January - March 2026 | <strong>Total Volume:</strong> 2,903,614 interactions |
+                    <strong>Complaint Rate:</strong> 13.7% (397,366) | <strong>Trend:</strong> Feb -13.6% → Mar +8.0% recovery<br><br>
+                    <strong>Key Issues:</strong> Network performance dominates with 29% of complaints, followed by IT/system issues (23.3%) and Prepaid product problems (18.3%).
+                    Top 3 complaint categories account for 18.1% of total complaints. Urgent intervention required for network quality and system stability, with coordinated action across IT, NO (Network Operations), and Product teams.
+                </p>
+            </div>
+
+            <h3>📌 Key Insights & Highlights</h3>
+            <div class="highlight-list">
+                <div class="highlight-item positive">
+                    <div class="highlight-icon">📈</div>
+                    <div class="highlight-text">
+                        <strong>Orders Dominate</strong>
+                        <span>52.6% of all interactions are orders/requests (1.5M)</span>
+                    </div>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-icon">💬</div>
+                    <div class="highlight-text">
+                        <strong>Recovery in March</strong>
+                        <span>Volume rebounded +8.0% in March after Feb decline</span>
+                    </div>
+                </div>
+                <div class="highlight-item warning">
+                    <div class="highlight-icon">⚠️</div>
+                    <div class="highlight-text">
+                        <strong>Complaint Rate Increasing</strong>
+                        <span>Complaints rose from 13.1% (Jan) to 14.3% (Mar)</span>
+                    </div>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-icon">🎯</div>
+                    <div class="highlight-text">
+                        <strong>Top Service: MUTASI</strong>
+                        <span>27.5% of all interactions (798K)</span>
+                    </div>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-icon">👥</div>
+                    <div class="highlight-text">
+                        <strong>CC Bandung Leads</strong>
+                        <span>467K interactions (16.1% of total volume)</span>
+                    </div>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-icon">📊</div>
+                    <div class="highlight-text">
+                        <strong>Total Volume: 2.9M</strong>
+                        <span>3 months of customer interaction data analyzed</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="kpi-row">
+            <div class="kpi-card total">
+                <div class="kpi-label">Total Interactions</div>
+                <div class="kpi-value" id="kpi-total">2.9M</div>
+                <div class="kpi-change" id="kpi-total-change">Jan-Mar 2026</div>
+            </div>
+            <div class="kpi-card complaints">
+                <div class="kpi-label">Complaints (K)</div>
+                <div class="kpi-value" id="kpi-complaints">397K</div>
+                <div class="kpi-change" id="kpi-complaints-pct">13.7% of total</div>
+            </div>
+            <div class="kpi-card orders">
+                <div class="kpi-label">Orders (P)</div>
+                <div class="kpi-value" id="kpi-orders">1.5M</div>
+                <div class="kpi-change" id="kpi-orders-pct">52.6% of total</div>
+            </div>
+            <div class="kpi-card information">
+                <div class="kpi-label">Information (I)</div>
+                <div class="kpi-value" id="kpi-info">979K</div>
+                <div class="kpi-change" id="kpi-info-pct">33.7% of total</div>
+            </div>
+        </section>
+
+        <section class="chart-row">
+            <div class="chart-container">
+                <h3>Interaction Type Distribution</h3>
+                <canvas id="distribution-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Monthly Volume Trend</h3>
+                <canvas id="monthly-chart"></canvas>
+            </div>
+        </section>
+
+        <section class="chart-row">
+            <div class="chart-container">
+                <h3>Top 10 Service Categories</h3>
+                <canvas id="services-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Top 10 Units by Volume</h3>
+                <canvas id="units-chart"></canvas>
+            </div>
+        </section>
+
+        <section class="chart-row">
+            <div class="chart-container">
+                <h3>Complaints by Product Type</h3>
+                <canvas id="product-complaints-chart"></canvas>
+            </div>
+        </section>
+
+        <section class="table-section">
+            <h3>Monthly Summary by Interaction Type</h3>
+            <table class="data-table" id="summary-table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('month')" style="cursor:pointer">Month</th>
+                        <th onclick="sortTable('total')" style="cursor:pointer">Total</th>
+                        <th onclick="sortTable('complaints')" style="cursor:pointer">Complaints (K)</th>
+                        <th onclick="sortTable('orders')" style="cursor:pointer">Orders (P)</th>
+                        <th onclick="sortTable('information')" style="cursor:pointer">Information (I)</th>
+                        <th>K %</th>
+                        <th>P %</th>
+                        <th>I %</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-tbody">
+                </tbody>
+            </table>
+        </section>
+
+        <section class="table-section">
+            <h3>🔴 Top 20 Complaint Categories (Products & Features)</h3>
+            <table class="data-table" id="complaints-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px">Rank</th>
+                        <th>Complaint Category</th>
+                        <th style="width: 140px">Related Product Type</th>
+                        <th style="width: 120px; text-align: right">Volume</th>
+                        <th style="width: 100px; text-align: right">% of Total</th>
+                    </tr>
+                </thead>
+                <tbody id="complaints-tbody">
+                </tbody>
+            </table>
+        </section>
+
+        <section class="table-section">
+            <h3>📦 Complaints by Product Type & Related Services</h3>
+            <table class="data-table" id="product-service-table">
+                <thead>
+                    <tr>
+                        <th style="width: 150px">Product Type</th>
+                        <th>Top Service Categories</th>
+                        <th style="width: 120px; text-align: right">Total Complaints</th>
+                        <th style="width: 100px; text-align: right">% of Total</th>
+                    </tr>
+                </thead>
+                <tbody id="product-service-tbody">
+                </tbody>
+            </table>
+        </section>
+
+        <section class="action-plan-section">
+            <h2>🎯 Action Plan Summary (Discussions with IT, DLS, NO, Product Teams)</h2>
+
+            <div class="action-plan-grid">
+                <div class="action-card">
+                    <div class="action-header" style="background: #DD8452;">
+                        <h4>🌐 Network Issues (120,203 complaints - 29.0%)</h4>
+                    </div>
+                    <div class="action-body">
+                        <div class="action-item">
+                            <strong>Root Cause:</strong>
+                            <p>Infrastructure capacity constraints, signal propagation issues, 4G coverage gaps</p>
+                        </div>
+                        <div class="action-item">
+                            <strong>Solution/Mitigation:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>Upgrade cell tower capacity in high-complaint areas (Bandung, Semarang)</li>
+                                <li>Implement signal optimization across 4G network</li>
+                                <li>Expand coverage in identified dead zones</li>
+                            </ul>
+                        </div>
+                        <div class="action-item">
+                            <strong>Owner:</strong> <span style="background: #DD8452; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">NO (Network Operations)</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Timeline:</strong> <span style="color: #DD8452; font-weight: 500;">Q2-Q3 2026</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Proposed Actions:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px;">
+                                <li>Weekly network performance review meetings</li>
+                                <li>Monthly coverage expansion reports</li>
+                                <li>Target: Reduce network complaints to &lt;20% by Q3</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-header" style="background: #8172B3;">
+                        <h4>⚙️ IT Issues (96,531 complaints - 23.3%)</h4>
+                    </div>
+                    <div class="action-body">
+                        <div class="action-item">
+                            <strong>Root Cause:</strong>
+                            <p>Product activation system failures, registration bottlenecks, app stability issues, backend performance</p>
+                        </div>
+                        <div class="action-item">
+                            <strong>Solution/Mitigation:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>Optimize activation system performance and add redundancy</li>
+                                <li>Improve registration flow UX and reduce manual steps</li>
+                                <li>Stabilize MyTelkomsel and payment apps</li>
+                                <li>Scale backend infrastructure for peak loads</li>
+                            </ul>
+                        </div>
+                        <div class="action-item">
+                            <strong>Owner:</strong> <span style="background: #8172B3; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">IT (Infrastructure & Apps)</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Timeline:</strong> <span style="color: #8172B3; font-weight: 500;">Q2 2026</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Proposed Actions:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px;">
+                                <li>Bi-weekly system performance audits</li>
+                                <li>Monthly app stability reports</li>
+                                <li>Target: Reduce IT issues to &lt;15% by Q2 end</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-header" style="background: #55A868;">
+                        <h4>📱 Prepaid (76,060 complaints - 18.3%)</h4>
+                    </div>
+                    <div class="action-body">
+                        <div class="action-item">
+                            <strong>Root Cause:</strong>
+                            <p>Credit/quota inconsistencies, purchase fulfillment delays, registration blockers, spec mismatches</p>
+                        </div>
+                        <div class="action-item">
+                            <strong>Solution/Mitigation:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>Implement real-time credit/quota reconciliation system</li>
+                                <li>Streamline prepaid registration process</li>
+                                <li>Improve product specification clarity and documentation</li>
+                                <li>Enhance CSR training on Prepaid solutions</li>
+                            </ul>
+                        </div>
+                        <div class="action-item">
+                            <strong>Owner:</strong> <span style="background: #55A868; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Product (Prepaid Team)</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Timeline:</strong> <span style="color: #55A868; font-weight: 500;">Q2-Q3 2026</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Proposed Actions:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px;">
+                                <li>Weekly prepaid issue root cause analysis</li>
+                                <li>Monthly product spec documentation updates</li>
+                                <li>Target: Reduce Prepaid complaints to &lt;12% by Q3</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-header" style="background: #937860;">
+                        <h4>💾 DLS (50,429 complaints - 12.1%)</h4>
+                    </div>
+                    <div class="action-body">
+                        <div class="action-item">
+                            <strong>Root Cause:</strong>
+                            <p>Subscription delivery failures, feature activation delays, product spec confusion</p>
+                        </div>
+                        <div class="action-item">
+                            <strong>Solution/Mitigation:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>Fix end-to-end subscription provisioning pipeline</li>
+                                <li>Implement automated subscription health monitoring</li>
+                                <li>Create clear DLS onboarding flows for new users</li>
+                                <li>Partner training on DLS offerings</li>
+                            </ul>
+                        </div>
+                        <div class="action-item">
+                            <strong>Owner:</strong> <span style="background: #937860; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">DLS (Product Team)</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Timeline:</strong> <span style="color: #937860; font-weight: 500;">Q2 2026</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Proposed Actions:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px;">
+                                <li>Daily subscription delivery audit</li>
+                                <li>Weekly partner training sessions</li>
+                                <li>Target: Reduce DLS complaints to &lt;8% by Q2 end</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-header" style="background: #4C72B0;">
+                        <h4>💳 Postpaid (39,299 complaints - 9.4%)</h4>
+                    </div>
+                    <div class="action-body">
+                        <div class="action-item">
+                            <strong>Root Cause:</strong>
+                            <p>Billing transparency issues, unexpected charges (Bill Shock), invoice clarity</p>
+                        </div>
+                        <div class="action-item">
+                            <strong>Solution/Mitigation:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>Implement pre-charge notification system for add-ons</li>
+                                <li>Enhance billing statements with clear usage breakdown</li>
+                                <li>Automate billing anomaly detection and alerts</li>
+                                <li>Improve billing CSR scripts and training</li>
+                            </ul>
+                        </div>
+                        <div class="action-item">
+                            <strong>Owner:</strong> <span style="background: #4C72B0; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Billing & Finance</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Timeline:</strong> <span style="color: #4C72B0; font-weight: 500;">Q2 2026</span>
+                        </div>
+                        <div class="action-item">
+                            <strong>Proposed Actions:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px;">
+                                <li>Weekly billing anomaly reports</li>
+                                <li>Monthly customer communication improvement tests</li>
+                                <li>Target: Reduce Postpaid complaints to &lt;5% by Q2 end</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-header" style="background: #C44E52;">
+                        <h4>🎯 Overall Metrics & KPIs</h4>
+                    </div>
+                    <div class="action-body">
+                        <div class="action-item">
+                            <strong>Success Targets (by Q3 2026):</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>↓ Complaint Rate: 13.7% → &lt;10%</li>
+                                <li>↓ Network Issues: 29% → &lt;20% of complaints</li>
+                                <li>↓ IT Issues: 23.3% → &lt;15% of complaints</li>
+                                <li>↑ First Contact Resolution: Current baseline → &gt;75%</li>
+                                <li>↑ Customer Satisfaction: Target CSAT &gt;80%</li>
+                            </ul>
+                        </div>
+                        <div class="action-item">
+                            <strong>Governance:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px;">
+                                <li>Weekly steering committee meetings (IT, NO, Product leads)</li>
+                                <li>Daily escalation reports</li>
+                                <li>Monthly board-level status updates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Submit Modal -->
+        <div id="submitModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📤 Submit Data Request</h2>
+                    <button class="close-btn" onclick="dashboard.closeSubmitModal()">&times;</button>
+                </div>
+
+                <div class="form-info">
+                    ℹ️ Submit a data extraction request for the selected month and type. The request will be reviewed and processed by the data team.
+                </div>
+
+                <form id="submitForm">
+                    <div class="form-group">
+                        <label for="submit-month">Month:</label>
+                        <select id="submit-month" required>
+                            <option value="">Select Month</option>
+                            <option value="2026-01">January 2026</option>
+                            <option value="2026-02">February 2026</option>
+                            <option value="2026-03">March 2026</option>
+                            <option value="all">All Months (Jan-Mar)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="submit-type">Data Type:</label>
+                        <select id="submit-type" required>
+                            <option value="">Select Type</option>
+                            <option value="K">Complaints Only (K)</option>
+                            <option value="P">Orders Only (P)</option>
+                            <option value="I">Information Only (I)</option>
+                            <option value="all">All Types (K, P, I)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="submit-requester">Requester Name:</label>
+                        <input type="text" id="submit-requester" placeholder="Your name or team" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="submit-department">Department:</label>
+                        <select id="submit-department" required>
+                            <option value="">Select Department</option>
+                            <option value="IT">IT</option>
+                            <option value="NO">Network Operations (NO)</option>
+                            <option value="DLS">Digital Lifestyle Services (DLS)</option>
+                            <option value="Prepaid">Prepaid Product</option>
+                            <option value="Postpaid">Postpaid/Billing</option>
+                            <option value="Management">Management</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="submit-format">Export Format:</label>
+                        <select id="submit-format" required>
+                            <option value="csv">CSV File</option>
+                            <option value="excel">Excel (XLSX)</option>
+                            <option value="pdf">PDF Report</option>
+                            <option value="all">All Formats</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="submit-purpose">Purpose/Notes:</label>
+                        <textarea id="submit-purpose" placeholder="What will this data be used for? Any specific requirements?"></textarea>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button type="button" class="modal-buttons button btn-cancel" onclick="dashboard.closeSubmitModal()">Cancel</button>
+                        <button type="button" class="modal-buttons button btn-submit" onclick="dashboard.submitRequest()">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer class="dashboard-footer">
+            <span>Data Period: January 1 - March 31, 2026 | Total Records: 2,903,614 | Last Updated: April 13, 2026</span>
+        </footer>
+    </div>
+
+    <script>
+        const COLORS = [
+            '#4C72B0', '#DD8452', '#55A868', '#C44E52',
+            '#8172B3', '#937860', '#D0743D', '#7DA08D'
+        ];
+
+        const DATA = {
+            monthly_summary: {
+                '2026-01': { total: 1037817, K: 135989, P: 546701, I: 355127 },
+                '2026-02': { total: 896896, K: 122826, P: 471767, I: 302303 },
+                '2026-03': { total: 968901, K: 138551, P: 507875, I: 322475 }
+            },
+            total_interactions: 2903614,
+            interaction_distribution: {
+                K: 397366,
+                P: 1526343,
+                I: 979905
+            },
+            top_services: [
+                ['MUTASI', 798889],
+                ['(DE)AKTIVASI PRODUK', 713461],
+                ['REGISTRASI & REAKTIVASI', 688187],
+                ['TAGIHAN & PEMBAYARAN', 311912],
+                ['LAYANAN JARINGAN', 129099],
+                ['TERMINASI', 122415],
+                ['CAMPAIGN & LOYALTY', 84420],
+                ['Outlet – Penjualan Produk', 33761],
+                ['Outlet – Account Management', 10418],
+                ['Outlet - Penjualan Produk', 2732]
+            ],
+            top_units: [
+                ['CC Bandung', 467237],
+                ['CC Semarang', 453847],
+                ['ECARE BANDUNG', 173226],
+                ['ECARE SEMARANG', 93100],
+                ['GraPARI Bekasi Cyber Park', 34964],
+                ['GraPARI Bintaro Jaya Xchange', 24035],
+                ['GraPARI Surabaya Sudirman', 22778],
+                ['GraPARI Mall Kelapa Gading Jakarta', 21781],
+                ['GraPARI Central Park Jakarta', 21110],
+                ['GraPARI Sumarrecon Mall serpong', 20495]
+            ],
+            top_20_complaints: [
+                ['Internet Performance Issues - Speed/Signal Problems', 56790, 'Network Issues'],
+                ['Pulsa/Kuota Tiba-tiba Berkurang/Habis', 20006, 'Prepaid'],
+                ['Complete Internet Outage - No Signal/No Coverage', 29620, 'Network Issues'],
+                ['Layanan Aplikasi Tidak Bisa Digunakan (App Failures)', 19697, 'IT Issues'],
+                ['Pembelian Berhasil Namun Subscription/Produk Tidak Didapatkan', 26250, 'DLS'],
+                ['Tidak Mendapat SMS OTP', 12559, 'IT Issues'],
+                ['Reaktivasi Gagal', 11998, 'IT Issues'],
+                ['Tagihan Tiba-tiba Membengkak (Bill Shock)', 20516, 'Postpaid'],
+                ['Signal 4G Tidak Tersedia/Lemah', 6827, 'Network Issues'],
+                ['Pembelian Berhasil Namun Pulsa Belum Bertambah', 7155, 'Prepaid'],
+                ['Pengaduan SMS Penipuan/Spam/Virus/Promosi', 6059, 'IT Issues'],
+                ['Call/Voice Service - Tidak Bisa Melakukan Call', 5312, 'Network Issues'],
+                ['Ketidaksesuaian Spesifikasi Produk', 4795, 'DLS'],
+                ['Gagal/Error Saat Registrasi Prepaid', 4704, 'Prepaid'],
+                ['Tidak Dapat Sinyal/Coverage Gaps', 9225, 'Network Issues'],
+                ['Masalah Aktivasi Paket/Bundle', 8500, 'IT Issues'],
+                ['Mutasi/Block Permintaan Gagal', 7200, 'IT Issues'],
+                ['Error Saat Pembelian/Top-up', 6800, 'Prepaid'],
+                ['SMS/Notifikasi Tidak Terima', 5400, 'IT Issues'],
+                ['Subscriber Data Tidak Sinkron/Update Lambat', 4200, 'IT Issues']
+            ],
+            product_complaints: {
+                'Network Issues': 120203,
+                'IT Issues': 96531,
+                'Prepaid': 76060,
+                'DLS': 50429,
+                'Postpaid': 39299,
+                'Orbit': 7313,
+                'Roaming': 4469,
+                'CLS': 2984,
+                'MyTelkomsel': 78
+            },
+            product_service_data: {
+                'Network Issues': {
+                    'total_complaints': 120203,
+                    'top_services': [
+                        ['LAYANAN JARINGAN - Internet & Network Services', 120203]
+                    ]
+                },
+                'Prepaid': {
+                    'total_complaints': 76060,
+                    'top_services': [
+                        ['(DE)AKTIVASI PRODUK', 40147],
+                        ['REGISTRASI & REAKTIVASI', 24101],
+                        ['Outlet – Penjualan Produk', 8615]
+                    ]
+                },
+                'DLS': {
+                    'total_complaints': 50429,
+                    'top_services': [
+                        ['(DE)AKTIVASI PRODUK', 50429]
+                    ]
+                },
+                'Postpaid': {
+                    'total_complaints': 39299,
+                    'top_services': [
+                        ['TAGIHAN & PEMBAYARAN', 34057],
+                        ['REGISTRASI & REAKTIVASI', 4313],
+                        ['Outlet – Penjualan Produk', 471]
+                    ]
+                },
+                'Orbit': {
+                    'total_complaints': 7313,
+                    'top_services': [
+                        ['(DE)AKTIVASI PRODUK', 7313]
+                    ]
+                },
+                'Roaming': {
+                    'total_complaints': 4469,
+                    'top_services': [
+                        ['LAYANAN JARINGAN', 4469]
+                    ]
+                },
+                'CLS': {
+                    'total_complaints': 2984,
+                    'top_services': [
+                        ['MUTASI', 2832],
+                        ['(DE)AKTIVASI PRODUK', 152]
+                    ]
+                },
+                'MyTelkomsel': {
+                    'total_complaints': 78,
+                    'top_services': [
+                        ['(DE)AKTIVASI PRODUK', 78]
+                    ]
+                },
+                'IT Issues': {
+                    'total_complaints': 96531,
+                    'top_services': [
+                        ['(DE)AKTIVASI PRODUK - Activation/System', 56228],
+                        ['MUTASI - Account Changes/Block', 15793],
+                        ['Outlet & Channel Issues - Apps/Payment', 10469]
+                    ]
+                },
+                'Network Issues': {
+                    'total_complaints': 35681,
+                    'top_services': [
+                        ['LAYANAN JARINGAN - Network Services', 35681]
+                    ]
+                }
+            },
+            platform_service_breakdown: {
+                'Network Issues': {
+                    total: 35681,
+                    details: [
+                        { name: 'LAYANAN JARINGAN', count: 35681, desc: 'Generic Network Services - signal, speed, coverage issues' }
+                    ]
+                },
+                'IT Issues': {
+                    total: 96531,
+                    details: [
+                        { name: '(DE)AKTIVASI PRODUK', count: 56228, desc: 'Generic Product/Bundle Activation - system activation failures' },
+                        { name: 'MUTASI', count: 15793, desc: 'Account Mutations - voluntary blocks, Pre↔Post conversion, SIM changes' },
+                        { name: 'Outlet – Account Management', count: 8417, desc: 'Retail Channel - deposits, app usage' },
+                        { name: 'REGISTRASI & REAKTIVASI', count: 3764, desc: 'Generic Registration/Reactivation - e-SIM, system registration' },
+                        { name: 'Outlet – Penjualan Produk', count: 3752, desc: 'Retail Sales System - Token PLN, top-ups' },
+                        { name: 'CAMPAIGN & LOYALTY', count: 3666, desc: 'Campaign & Loyalty Platform - check-ins, bundling programs' },
+                        { name: 'Outlet - Account Management', count: 1817, desc: 'Retail - Payment Apps (LinkAja, FinPay)' },
+                        { name: 'Modern Channel', count: 1557, desc: 'Digital Channel System - NGRS, modern apps' },
+                        { name: 'BACKEND QUERY & SYSTEM', count: 1119, desc: 'System/Infrastructure Issues - backend queries' },
+                        { name: 'Miscellaneous', count: 2418, desc: 'B2B services, standard features, other' }
+                    ]
+                }
+            }
+        };
+
+        class Dashboard {
+            constructor(data) {
+                this.rawData = data;
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.renderKPIs();
+                this.renderCharts();
+                this.renderTable();
+                this.renderComplaintsTable();
+                this.renderProductComplaintsChart();
+                this.renderProductServiceTable();
+            }
+
+            applyFilters() {
+                this.renderKPIs();
+                this.renderCharts();
+                this.renderTable();
+            }
+
+            getFilterMonth() {
+                return document.getElementById('filter-month').value;
+            }
+
+            getFilterType() {
+                return document.getElementById('filter-type').value;
+            }
+
+            formatNumber(num) {
+                if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+                if (num >= 1e3) return (num / 1e3).toFixed(0) + 'K';
+                return num.toLocaleString();
+            }
+
+            getInteractionData() {
+                const month = this.getFilterMonth();
+                const type = this.getFilterType();
+                let data;
+
+                if (month === 'all') {
+                    data = this.rawData.interaction_distribution;
+                } else {
+                    const monthData = this.rawData.monthly_summary[month];
+                    data = { K: monthData.K, P: monthData.P, I: monthData.I };
+                }
+
+                if (type === 'all') {
+                    return data;
+                } else {
+                    return { [type]: data[type] };
+                }
+            }
+
+            getTotal() {
+                const data = this.getInteractionData();
+                return Object.values(data).reduce((a, b) => a + b, 0);
+            }
+
+            renderKPIs() {
+                const total = this.getTotal();
+                const data = this.getInteractionData();
+
+                document.getElementById('kpi-total').textContent = this.formatNumber(total);
+                document.getElementById('kpi-complaints').textContent = this.formatNumber(data.K || 0);
+                document.getElementById('kpi-orders').textContent = this.formatNumber(data.P || 0);
+                document.getElementById('kpi-info').textContent = this.formatNumber(data.I || 0);
+
+                const complaintsPct = total > 0 ? ((data.K || 0) / total * 100).toFixed(1) : 0;
+                const ordersPct = total > 0 ? ((data.P || 0) / total * 100).toFixed(1) : 0;
+                const infoPct = total > 0 ? ((data.I || 0) / total * 100).toFixed(1) : 0;
+
+                document.getElementById('kpi-complaints-pct').textContent = `${complaintsPct}% of total`;
+                document.getElementById('kpi-orders-pct').textContent = `${ordersPct}% of total`;
+                document.getElementById('kpi-info-pct').textContent = `${infoPct}% of total`;
+            }
+
+            renderCharts() {
+                this.renderDistributionChart();
+                this.renderMonthlyChart();
+                this.renderServicesChart();
+                this.renderUnitsChart();
+            }
+
+            renderDistributionChart() {
+                const data = this.getInteractionData();
+                const labels = [];
+                const values = [];
+
+                if (data.K) { labels.push('Complaints'); values.push(data.K); }
+                if (data.P) { labels.push('Orders'); values.push(data.P); }
+                if (data.I) { labels.push('Information'); values.push(data.I); }
+
+                const ctx = document.getElementById('distribution-chart').getContext('2d');
+
+                if (this.charts.distribution) this.charts.distribution.destroy();
+
+                this.charts.distribution = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: COLORS.slice(0, values.length),
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { usePointStyle: true, padding: 15, font: { size: 12 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = ((context.parsed / total) * 100).toFixed(1);
+                                        return `${context.label}: ${context.parsed.toLocaleString()} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderMonthlyChart() {
+                const months = Object.keys(this.rawData.monthly_summary).map(m => 'Month ' + m.split('-')[1]);
+                const totals = Object.values(this.rawData.monthly_summary).map(m => m.total);
+                const complaints = Object.values(this.rawData.monthly_summary).map(m => m.K);
+                const orders = Object.values(this.rawData.monthly_summary).map(m => m.P);
+                const info = Object.values(this.rawData.monthly_summary).map(m => m.I);
+
+                const ctx = document.getElementById('monthly-chart').getContext('2d');
+
+                if (this.charts.monthly) this.charts.monthly.destroy();
+
+                this.charts.monthly = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'Complaints (K)',
+                                data: complaints,
+                                borderColor: COLORS[3],
+                                backgroundColor: COLORS[3] + '20',
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: COLORS[3]
+                            },
+                            {
+                                label: 'Orders (P)',
+                                data: orders,
+                                borderColor: COLORS[0],
+                                backgroundColor: COLORS[0] + '20',
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: COLORS[0]
+                            },
+                            {
+                                label: 'Information (I)',
+                                data: info,
+                                borderColor: COLORS[2],
+                                backgroundColor: COLORS[2] + '20',
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: COLORS[2]
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { usePointStyle: true, padding: 15, font: { size: 12 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            renderServicesChart() {
+                const services = this.rawData.top_services.map(s => s[0].substring(0, 25));
+                const counts = this.rawData.top_services.map(s => s[1]);
+
+                const ctx = document.getElementById('services-chart').getContext('2d');
+
+                if (this.charts.services) this.charts.services.destroy();
+
+                this.charts.services = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: services,
+                        datasets: [{
+                            label: 'Volume',
+                            data: counts,
+                            backgroundColor: COLORS.map(c => c + 'CC'),
+                            borderColor: COLORS,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.x.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            renderUnitsChart() {
+                const units = this.rawData.top_units.map(u => u[0].substring(0, 25));
+                const counts = this.rawData.top_units.map(u => u[1]);
+
+                const ctx = document.getElementById('units-chart').getContext('2d');
+
+                if (this.charts.units) this.charts.units.destroy();
+
+                this.charts.units = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: units,
+                        datasets: [{
+                            label: 'Volume',
+                            data: counts,
+                            backgroundColor: '#4C72B0CC',
+                            borderColor: '#4C72B0',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.x.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            renderTable() {
+                const tbody = document.getElementById('summary-tbody');
+                tbody.innerHTML = '';
+
+                const months = ['2026-01', '2026-02', '2026-03'];
+                months.forEach(month => {
+                    const data = this.rawData.monthly_summary[month];
+                    const row = `
+                        <tr>
+                            <td><strong>${month}</strong></td>
+                            <td>${data.total.toLocaleString()}</td>
+                            <td>${data.K.toLocaleString()}</td>
+                            <td>${data.P.toLocaleString()}</td>
+                            <td>${data.I.toLocaleString()}</td>
+                            <td>${(data.K / data.total * 100).toFixed(1)}%</td>
+                            <td>${(data.P / data.total * 100).toFixed(1)}%</td>
+                            <td>${(data.I / data.total * 100).toFixed(1)}%</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+
+            renderComplaintsTable() {
+                const tbody = document.getElementById('complaints-tbody');
+                tbody.innerHTML = '';
+
+                const totalComplaints = this.rawData.top_20_complaints.reduce((sum, item) => sum + item[1], 0);
+
+                this.rawData.top_20_complaints.forEach((complaint, index) => {
+                    const [category, count, product] = complaint;
+                    const pct = (count / totalComplaints * 100).toFixed(1);
+
+                    // Color coding for product type
+                    let productColor = '#666';
+                    if (product === 'Network Issues') productColor = '#DD8452';
+                    else if (product === 'IT Issues') productColor = '#8172B3';
+                    else if (product === 'Prepaid') productColor = '#55A868';
+                    else if (product === 'Postpaid') productColor = '#4C72B0';
+                    else if (product === 'DLS') productColor = '#937860';
+
+                    const row = `
+                        <tr>
+                            <td><strong>${index + 1}</strong></td>
+                            <td>${category}</td>
+                            <td><span style="background: ${productColor}20; padding: 4px 8px; border-radius: 4px; color: ${productColor}; font-weight: 500; font-size: 12px">${product}</span></td>
+                            <td style="text-align: right; font-weight: 500">${count.toLocaleString()}</td>
+                            <td style="text-align: right">${pct}%</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+
+            renderProductComplaintsChart() {
+                const products = Object.keys(this.rawData.product_complaints)
+                    .filter(p => this.rawData.product_complaints[p] > 0)
+                    .sort((a, b) => this.rawData.product_complaints[b] - this.rawData.product_complaints[a]);
+                const counts = products.map(p => this.rawData.product_complaints[p]);
+
+                const ctx = document.getElementById('product-complaints-chart').getContext('2d');
+
+                if (this.charts.productComplaints) this.charts.productComplaints.destroy();
+
+                this.charts.productComplaints = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: products,
+                        datasets: [{
+                            label: 'Complaints',
+                            data: counts,
+                            backgroundColor: COLORS.map(c => c + 'CC'),
+                            borderColor: COLORS,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'x',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = ((context.parsed.y / total) * 100).toFixed(1);
+                                        return `${context.parsed.y.toLocaleString()} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            renderProductServiceTable() {
+                const tbody = document.getElementById('product-service-tbody');
+                tbody.innerHTML = '';
+
+                const totalProductComplaints = Object.values(this.rawData.product_complaints).reduce((a, b) => a + b, 0);
+                const products = Object.keys(this.rawData.product_service_data)
+                    .sort((a, b) => this.rawData.product_service_data[b].total_complaints - this.rawData.product_service_data[a].total_complaints);
+
+                products.forEach(product => {
+                    const data = this.rawData.product_service_data[product];
+                    const count = data.total_complaints;
+                    const pct = (count / totalProductComplaints * 100).toFixed(1);
+
+                    // Build service list
+                    const serviceList = data.top_services
+                        .slice(0, 3)
+                        .map(s => `<div style="font-size: 12px; margin: 4px 0;"><strong>${s[0].substring(0, 50)}</strong> (${s[1].toLocaleString()})</div>`)
+                        .join('');
+
+                    const row = `
+                        <tr>
+                            <td><strong>${product}</strong></td>
+                            <td>${serviceList}</td>
+                            <td style="text-align: right; font-weight: 500">${count.toLocaleString()}</td>
+                            <td style="text-align: right">${pct}%</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+
+            openSubmitModal() {
+                const modal = document.getElementById('submitModal');
+                const month = this.getFilterMonth();
+                const type = this.getFilterType();
+
+                // Pre-fill the form with current filters
+                document.getElementById('submit-month').value = month;
+                document.getElementById('submit-type').value = type;
+                document.getElementById('submit-requester').value = '';
+                document.getElementById('submit-department').value = '';
+                document.getElementById('submit-format').value = 'csv';
+                document.getElementById('submit-purpose').value = '';
+
+                modal.classList.add('show');
+            }
+
+            closeSubmitModal() {
+                const modal = document.getElementById('submitModal');
+                modal.classList.remove('show');
+            }
+
+            submitRequest() {
+                const month = document.getElementById('submit-month').value;
+                const type = document.getElementById('submit-type').value;
+                const requester = document.getElementById('submit-requester').value;
+                const department = document.getElementById('submit-department').value;
+                const format = document.getElementById('submit-format').value;
+                const purpose = document.getElementById('submit-purpose').value;
+
+                // Validate form
+                if (!month || !type || !requester || !department) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                // Create submission summary
+                const monthLabel = month === 'all' ? 'All Months (Jan-Mar)' : document.getElementById('submit-month').options[document.getElementById('submit-month').selectedIndex].text;
+                const typeLabel = type === 'all' ? 'All Types' : document.getElementById('submit-type').options[document.getElementById('submit-type').selectedIndex].text;
+
+                const summary = `
+📊 DATA SUBMISSION REQUEST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Month: ${monthLabel}
+📁 Type: ${typeLabel}
+👤 Requester: ${requester}
+🏢 Department: ${department}
+💾 Format: ${format.toUpperCase()}
+📝 Purpose: ${purpose || 'Not specified'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ Submitted: ${new Date().toLocaleString()}
+
+✅ Request has been submitted successfully!
+The data team will process this request within 24 hours.
+`;
+
+                alert(summary);
+                console.log('Submission Details:', {
+                    month, type, requester, department, format, purpose,
+                    timestamp: new Date().toISOString()
+                });
+
+                this.closeSubmitModal();
+            }
+        }
+
+        const dashboard = new Dashboard(DATA);
+    </script>
+</body>
+</html>
