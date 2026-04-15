@@ -630,59 +630,15 @@
 
         <section class="highlights">
             <h3>📋 Executive Summary</h3>
-            <div style="background: #f8f9fa; padding: 16px; border-radius: 6px; border-left: 4px solid #4C72B0; margin-bottom: 16px;">
-                <p style="margin: 0; line-height: 1.6; color: #212529;">
-                    <strong>Period:</strong> January - March 2026 | <strong>Total Volume:</strong> 2,903,614 interactions |
-                    <strong>Complaint Rate:</strong> 13.7% (397,366) | <strong>Trend:</strong> Feb -13.6% → Mar +8.0% recovery<br><br>
-                    <strong>Key Issues:</strong> Network performance dominates with 29% of complaints, followed by IT/system issues (23.3%) and Prepaid product problems (18.3%).
-                    Top 3 complaint categories account for 18.1% of total complaints. Urgent intervention required for network quality and system stability, with coordinated action across IT, NO (Network Operations), and Product teams.
+            <div id="executive-summary-box" style="background: #f8f9fa; padding: 16px; border-radius: 6px; border-left: 4px solid #4C72B0; margin-bottom: 16px;">
+                <p style="margin: 0; line-height: 1.6; color: #212529;" id="executive-summary-text">
+                    Loading summary...
                 </p>
             </div>
 
             <h3>📌 Key Insights & Highlights</h3>
-            <div class="highlight-list">
-                <div class="highlight-item positive">
-                    <div class="highlight-icon">📈</div>
-                    <div class="highlight-text">
-                        <strong>Orders Dominate</strong>
-                        <span>52.6% of all interactions are orders/requests (1.5M)</span>
-                    </div>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-icon">💬</div>
-                    <div class="highlight-text">
-                        <strong>Recovery in March</strong>
-                        <span>Volume rebounded +8.0% in March after Feb decline</span>
-                    </div>
-                </div>
-                <div class="highlight-item warning">
-                    <div class="highlight-icon">⚠️</div>
-                    <div class="highlight-text">
-                        <strong>Complaint Rate Increasing</strong>
-                        <span>Complaints rose from 13.1% (Jan) to 14.3% (Mar)</span>
-                    </div>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-icon">🎯</div>
-                    <div class="highlight-text">
-                        <strong>Top Service: MUTASI</strong>
-                        <span>27.5% of all interactions (798K)</span>
-                    </div>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-icon">👥</div>
-                    <div class="highlight-text">
-                        <strong>CC Bandung Leads</strong>
-                        <span>467K interactions (16.1% of total volume)</span>
-                    </div>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-icon">📊</div>
-                    <div class="highlight-text">
-                        <strong>Total Volume: 2.9M</strong>
-                        <span>3 months of customer interaction data analyzed</span>
-                    </div>
-                </div>
+            <div class="highlight-list" id="highlights-container">
+                Loading highlights...
             </div>
         </section>
 
@@ -1256,6 +1212,7 @@
             }
 
             init() {
+                this.renderHighlights();
                 this.renderKPIs();
                 this.renderCharts();
                 this.renderTable();
@@ -1265,9 +1222,115 @@
             }
 
             applyFilters() {
+                this.renderHighlights();
                 this.renderKPIs();
                 this.renderCharts();
                 this.renderTable();
+            }
+
+            renderHighlights() {
+                const month = this.getFilterMonth();
+                const type = this.getFilterType();
+                const total = this.getTotal();
+                const data = this.getInteractionData();
+
+                // Determine period label
+                let periodLabel = 'January - March 2026';
+                if (month === '2026-01') periodLabel = 'January 2026';
+                else if (month === '2026-02') periodLabel = 'February 2026';
+                else if (month === '2026-03') periodLabel = 'March 2026';
+
+                // Calculate complaint rate
+                const complaintRate = total > 0 ? ((data.K || 0) / total * 100).toFixed(1) : 0;
+
+                // Calculate type breakdown percentages
+                const ordersRate = total > 0 ? ((data.P || 0) / total * 100).toFixed(1) : 0;
+                const infoRate = total > 0 ? ((data.I || 0) / total * 100).toFixed(1) : 0;
+
+                // Build summary text
+                let summaryText = `<strong>Period:</strong> ${periodLabel} | <strong>Total Volume:</strong> ${this.formatNumber(total)} interactions | <strong>Complaint Rate:</strong> ${complaintRate}%`;
+                if (month === 'all') {
+                    summaryText += ` (${this.formatNumber(data.K || 0)})`;
+                }
+
+                if (month === 'all') {
+                    summaryText += ` | <strong>Trend:</strong> Jan → Feb (-13.6%) → Mar (+8.0% recovery)<br><br>`;
+                } else {
+                    summaryText += `<br><br>`;
+                }
+
+                summaryText += `<strong>Key Issues:</strong> Network performance dominates with 29% of complaints, followed by IT/system issues (23.3%) and Prepaid product problems (18.3%).
+                    Top 3 complaint categories account for 18.1% of total complaints. Intervention required for network quality and system stability.`;
+
+                document.getElementById('executive-summary-text').innerHTML = summaryText;
+
+                // Build highlights HTML
+                let highlightsHTML = '';
+
+                if (type === 'all' || type === 'P') {
+                    highlightsHTML += `
+                        <div class="highlight-item positive">
+                            <div class="highlight-icon">📈</div>
+                            <div class="highlight-text">
+                                <strong>Orders Volume</strong>
+                                <span>${ordersRate}% of interactions (${this.formatNumber(data.P || 0)})</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (month === 'all') {
+                    highlightsHTML += `
+                        <div class="highlight-item">
+                            <div class="highlight-icon">💬</div>
+                            <div class="highlight-text">
+                                <strong>Month-over-Month Trend</strong>
+                                <span>Feb declined -13.6%, Mar recovered +8.0%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (type === 'all' || type === 'K') {
+                    highlightsHTML += `
+                        <div class="highlight-item ${complaintRate > 13 ? 'warning' : ''}">
+                            <div class="highlight-icon">⚠️</div>
+                            <div class="highlight-text">
+                                <strong>Complaint Rate</strong>
+                                <span>${complaintRate}% of total interactions (${this.formatNumber(data.K || 0)})</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (type === 'all' || type === 'I') {
+                    highlightsHTML += `
+                        <div class="highlight-item">
+                            <div class="highlight-icon">ℹ️</div>
+                            <div class="highlight-text">
+                                <strong>Information Requests</strong>
+                                <span>${infoRate}% of interactions (${this.formatNumber(data.I || 0)})</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                highlightsHTML += `
+                    <div class="highlight-item">
+                        <div class="highlight-icon">🎯</div>
+                        <div class="highlight-text">
+                            <strong>Data Period</strong>
+                            <span>${periodLabel} (${this.formatNumber(total)} total)</span>
+                        </div>
+                    </div>
+                `;
+
+                // Only show if at least one highlight was added
+                if (highlightsHTML === '') {
+                    highlightsHTML = '<p style="padding: 16px; color: #666;">No highlights available for selected filters</p>';
+                }
+
+                document.getElementById('highlights-container').innerHTML = highlightsHTML;
             }
 
             getFilterMonth() {
